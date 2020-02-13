@@ -31,6 +31,7 @@ inline void line(int x0, int y0, int x1, int y1, PPMImage &image, Color color) {
 
 // A,B,C in triangles
 // P is the Point
+// https://www.cnblogs.com/graphics/archive/2010/08/05/1793393.html
 inline bool point_in_triangle(glm::vec3 A, glm::vec3 B, glm::vec3 C,
                               glm::vec3 P) {
   glm::vec3 v0 = C - A;
@@ -57,7 +58,8 @@ inline bool point_in_triangle(glm::vec3 A, glm::vec3 B, glm::vec3 C,
   }
   return u + v <= 1;
 }
-void triangle(std::array<glm::vec3, 3> points, PPMImage &image, Color color) {
+void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
+              Color color) {
   glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
   glm::vec3 bbox_max{0, 0, 0};
   for (auto i : points) {
@@ -66,10 +68,22 @@ void triangle(std::array<glm::vec3, 3> points, PPMImage &image, Color color) {
     bbox_min.x = std::min(i.x, bbox_min.x);
     bbox_min.y = std::min(i.y, bbox_min.y);
   }
-  for (int i = bbox_min.x; i < bbox_max.x; i++) {
-    for (int j = bbox_min.y; j < bbox_max.y; j++) {
-      if (point_in_triangle(points[0], points[1], points[2], {i, j, 0})) {
-        image.set_pixel(i, j, color);
+  glm::vec3 normal =
+      glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
+  glm::vec3 p;
+  //  (P - points[0]) * normal = 0;
+  for (p.x = bbox_min.x; p.x < bbox_max.x; p.x++) {
+    for (p.y = bbox_min.y; p.y < bbox_max.y; p.y++) {
+      // point-normal formular
+      p.z = (-normal.x * (p.x - points[0].x) - normal.y * (p.y - points[0].y)) /
+                normal.z +
+            points[0].z;
+      if (point_in_triangle(points[0], points[1], points[2], p)) {
+        std::cout << zbuffer[int(p.y * image.width_ + p.x)] << p.z << std::endl;
+        if (zbuffer[int(p.y * image.width_ + p.x)] < p.z) {
+          image.set_pixel(p.x, p.y, color);
+          zbuffer[int(p.y * image.width_ + p.x)] = p.z;
+        }
       }
     }
   }

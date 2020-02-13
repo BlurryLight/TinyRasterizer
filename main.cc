@@ -12,8 +12,14 @@ int main(int argc, char *argv[]) {
   std::array<glm::vec3, 3> points;
   points[0] = glm::vec3(100, 10, 0);
   points[1] = glm::vec3(550, 10, 0);
-  points[2] = glm::vec3(500, 100, 0);
-  triangle(points, image, YELLOW);
+  points[2] = glm::vec3(500, 300, 100);
+  std::array<float, 800 * 600> zbuffer;
+  zbuffer.fill(std::numeric_limits<float>::lowest());
+  triangle(points, zbuffer.data(), image, YELLOW);
+  points[0] = glm::vec3(200, 20, 0);
+  points[1] = glm::vec3(550, 10, 200);
+  points[2] = glm::vec3(400, 400, 0);
+  triangle(points, zbuffer.data(), image, BLUE);
   ppm3_write(f.c_str(), image.width_, image.height_, image.image_);
 
   std::vector<Pixel> vec_2;
