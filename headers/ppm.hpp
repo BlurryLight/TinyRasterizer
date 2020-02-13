@@ -6,7 +6,39 @@
 #include <vector>
 namespace pd {
 struct Pixel {
-  unsigned int r, g, b;
+  unsigned int r_ = 0;
+  unsigned int g_ = 0;
+  unsigned int b_ = 0;
+  Pixel() {}
+  Pixel(int r, int g, int b) {
+    r_ = r;
+    g_ = g;
+    b_ = b;
+  }
+};
+struct PPMImage {
+  int width_;
+  int height_;
+  std::vector<Pixel> image_;
+  PPMImage() {
+    width_ = 640;
+    height_ = 480;
+    image_ = std::vector<Pixel>(width_ * height_);
+  }
+  PPMImage(int width, int height) {
+    width_ = width;
+    height_ = height;
+    image_ = std::vector<Pixel>(width_ * height_);
+  }
+  void set_pixel(int row, int col,
+                 const Pixel &p) //(0,1) 0 row 1 col = 2nd pixel
+  {
+    if (row >= height_ || col >= width_) {
+      std::cerr << "set_pixel index error" << std::endl;
+      return;
+    }
+    image_[width_ * row + col] = p;
+  }
 };
 
 // write picture as ppm3 ASCII
@@ -15,7 +47,7 @@ inline int ppm3_write(const char *path, int width, int height,
   std::ofstream ofs(path, std::ios::out);
   ofs << "P3\n" << width << " " << height << "\n255\n";
   for (auto pixel : vec) {
-    ofs << pixel.r << ' ' << pixel.g << ' ' << pixel.b << ' ' << '\n';
+    ofs << pixel.r_ << ' ' << pixel.g_ << ' ' << pixel.b_ << ' ' << '\n';
   }
   return 0;
 }
@@ -49,7 +81,7 @@ inline int ppm3_read(const char *path, int *width, int *height,
   while (std::getline(ifs, token)) {
     std::istringstream line(token);
     Pixel tmp;
-    line >> tmp.r >> tmp.g >> tmp.b;
+    line >> tmp.r_ >> tmp.g_ >> tmp.b_;
     vec->push_back(tmp);
   }
   return 0;
