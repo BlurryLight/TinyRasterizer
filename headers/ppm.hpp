@@ -6,19 +6,17 @@
 #include <vector>
 namespace pd {
 struct Pixel {
-  unsigned int r_ = 0;
-  unsigned int g_ = 0;
-  unsigned int b_ = 0;
+  float r_ = 0;
+  float g_ = 0;
+  float b_ = 0;
   Pixel() {}
-  Pixel(int r, int g, int b) {
+  Pixel(float r, float g, float b) {
     r_ = r;
     g_ = g;
     b_ = b;
   }
 };
-
-using Color = struct Pixel; // name alias
-
+using Color = struct Pixel;
 #define BLACK                                                                  \
   { 0, 0, 0 }
 #define WHITE                                                                  \
@@ -65,7 +63,8 @@ inline int ppm3_write(const char *path, int width, int height,
   std::ofstream ofs(path, std::ios::out);
   ofs << "P3\n" << width << " " << height << "\n255\n";
   for (auto pixel : vec) {
-    ofs << pixel.r_ << ' ' << pixel.g_ << ' ' << pixel.b_ << ' ' << '\n';
+    ofs << int(pixel.r_) << ' ' << int(pixel.g_) << ' ' << int(pixel.b_) << ' '
+        << '\n';
   }
   return 0;
 }

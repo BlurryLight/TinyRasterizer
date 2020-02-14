@@ -79,9 +79,8 @@ void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
                 normal.z +
             points[0].z;
       if (point_in_triangle(points[0], points[1], points[2], p)) {
-        std::cout << zbuffer[int(p.y * image.width_ + p.x)] << p.z << std::endl;
-        if (zbuffer[int(p.y * image.width_ + p.x)] < p.z) {
-          image.set_pixel(p.x, p.y, color);
+        if (zbuffer[int(p.y * image.width_ + p.x)] <= p.z) {
+          image.set_pixel(int(p.x), int(p.y), color);
           zbuffer[int(p.y * image.width_ + p.x)] = p.z;
         }
       }
