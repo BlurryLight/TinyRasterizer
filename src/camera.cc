@@ -1,4 +1,6 @@
 #include "camera.h"
+#include <glm/gtx/string_cast.hpp>
+#include <iostream>
 
 pd::Camera::Camera(glm::vec3 origin, glm::vec3 up, glm::vec3 lookat, float vfov,
                    float aspect) {
@@ -24,5 +26,13 @@ glm::mat4 pd::Camera::look_at() {
   rotation[0] = glm::vec4(xaxis, 0.0f);
   rotation[1] = glm::vec4(yaxis, 0.0f);
   rotation[2] = glm::vec4(zaxis, 0.0f);
+  //  std::cout << glm::to_string(trans) << '\t' << glm::to_string(rotation)
+  //            << std::endl;
   return trans * rotation;
+}
+
+glm::mat4 pd::Camera::project() {
+  glm::mat4 proj{1.0f};
+  proj[2][3] = -1.0f / glm::length(origin_);
+  return proj;
 }
