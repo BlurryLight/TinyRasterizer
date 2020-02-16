@@ -1,5 +1,6 @@
 #pragma once
 #include <fstream>
+#include <glm/glm.hpp>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -14,6 +15,11 @@ struct Pixel {
     r_ = r;
     g_ = g;
     b_ = b;
+  }
+  Pixel(const glm::vec3 &vec) {
+    r_ = vec.r;
+    g_ = vec.g;
+    b_ = vec.b;
   }
 };
 using Color = struct Pixel;
