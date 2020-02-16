@@ -1,6 +1,8 @@
 #include "geometry.hpp"
 #include "model.h"
 #include "ppm.hpp"
+#include <camera.h>
+#include <glm/gtc/matrix_transform.hpp>
 using namespace pd;
 #include <cstring>
 int main(int argc, char *argv[]) {
@@ -16,12 +18,23 @@ int main(int argc, char *argv[]) {
   Model model("african_head.obj", false);
 
   glm::vec3 lightdir{0, 0, -1}; // right-hand-coords
+
+  glm::mat4 model_mat(1.0f);
+  model_mat = glm::rotate(model_mat, glm::radians(90.0f), glm::vec3(0, 0, 1));
+  model_mat = glm::rotate(model_mat, glm::radians(45.0f), glm::vec3(0, 1, 0));
+
+  Camera cam(glm::vec3(10, 0, 100), glm::vec3(0, 1, 0), glm::vec3(0, 0, 0),
+             90.0f, float(width) / (float)height);
+  glm::mat4 view_mat = cam.look_at();
   for (auto mesh : model.meshes_) {
     std::array<glm::vec3, 3> world_coords;
     for (int i = 0; i < mesh.vertices_.size(); i += 3) {
       auto v0 = mesh.vertices_[mesh.indices_[i]];
       auto v1 = mesh.vertices_[mesh.indices_[i + 1]];
       auto v2 = mesh.vertices_[mesh.indices_[i + 2]];
+      v0.position_ = glm::mat3(view_mat) * glm::mat3(model_mat) * v0.position_;
+      v1.position_ = glm::mat3(view_mat) * glm::mat3(model_mat) * v1.position_;
+      v2.position_ = glm::mat3(view_mat) * glm::mat3(model_mat) * v2.position_;
       glm::vec3 normal = glm::normalize(
           glm::cross(v2.position_ - v0.position_, v1.position_ - v0.position_));
       float intensity = std::abs(glm::dot(normal, lightdir));
