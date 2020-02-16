@@ -10,7 +10,8 @@ public:
   Camera(glm::vec3 origin, glm::vec3 up, glm::vec3 lookat, float vfov,
          float aspect);
   glm::mat4 look_at();
-  glm::mat4 project();
+  glm::mat4 perspective();
+  glm::mat4 ortho();
 
 private:
   glm::vec3 origin_;

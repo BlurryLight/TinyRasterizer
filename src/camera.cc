@@ -31,8 +31,9 @@ glm::mat4 pd::Camera::look_at() {
   return trans * rotation;
 }
 
-glm::mat4 pd::Camera::project() {
+glm::mat4 pd::Camera::perspective() {
   glm::mat4 proj{1.0f};
   proj[2][3] = -1.0f / glm::length(origin_);
   return proj;
 }
+glm::mat4 pd::Camera::ortho() { return glm::mat4{1.0f}; }
