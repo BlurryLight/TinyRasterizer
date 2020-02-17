@@ -46,7 +46,7 @@ inline bool point_in_triangle(glm::vec3 A, glm::vec3 B, glm::vec3 C,
   float v1dotv1 = glm::dot(v1, v1);
 
   float denomimator = v0dotv0 * v1dotv1 - v0dotv1 * v0dotv1;
-  if (denomimator == 0.0) {
+  if (std::abs(denomimator - 0.0f) < 1e-5) {
     return false;
   }
   float u_numerator = v1dotv1 * v0dotv2 - v0dotv1 * v1dotv2;
@@ -83,7 +83,7 @@ void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
           points[0].z;
 
       if (point_in_triangle(points[0], points[1], points[2], p)) {
-        if (zbuffer[int(p.y * image.width_ + p.x)] <= p.z) {
+        if (zbuffer[int(p.y * image.width_ + p.x)] < p.z) {
           image.set_pixel(int(p.x), int(p.y), color);
           zbuffer[int(p.y * image.width_ + p.x)] = p.z;
         }
@@ -122,7 +122,7 @@ void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
 
       if (point_in_triangle(points[0].position_, points[1].position_,
                             points[2].position_, p)) {
-        if (zbuffer[int(p.y * image.width_ + p.x)] <= p.z) {
+        if (zbuffer[int(p.y * image.width_ + p.x)] < p.z) {
           glm::vec3 color;
           // https://www.zhihu.com/question/38356223/answer/76043922
           // points[0].position_ A colors[0] A.color

@@ -6,6 +6,7 @@
 #include <memory>
 using namespace pd;
 #include <cstring>
+#include <random>
 static void render_man(int width, int height, float *zbuffer, PPMImage &image) {
   Model model("african_head.obj", false);
 
@@ -59,16 +60,27 @@ static void render_man(int width, int height, float *zbuffer, PPMImage &image) {
   }
 };
 
+static std::random_device rd;
+static std::default_random_engine generator(rd());
+static std::uniform_int_distribution<> int_dis(0, 255);
+static std::uniform_real_distribution<> real_dis(0.1, 0.95);
 static void render_triangle(int width, int height, float *zbuffer,
                             PPMImage &image) {
   std::array<Vertex, 3> vertices;
-  vertices[0].position_ = glm::vec3(width * 0.3, height * 0.3, 10.0f);
-  vertices[1].position_ = glm::vec3(width * 0.4, height * 0.8, 20.0f);
-  vertices[2].position_ = glm::vec3(width * 0.8, height * 0.5, 50.0f);
+  int z = 100;
+  vertices[0].position_ =
+      glm::vec3(width * real_dis(generator), height * real_dis(generator),
+                float(z * real_dis(generator)));
+  vertices[1].position_ =
+      glm::vec3(width * real_dis(generator), height * real_dis(generator),
+                float(z * real_dis(generator)));
+  vertices[2].position_ =
+      glm::vec3(width * real_dis(generator), height * real_dis(generator),
+                float(z * real_dis(generator)));
   std::array<glm::vec3, 3> colors;
-  colors[0] = YELLOW;
-  colors[1] = BLUE;
-  colors[2] = RED;
+  colors[0] = {int_dis(generator), int_dis(generator), int_dis(generator)};
+  colors[1] = {int_dis(generator), int_dis(generator), int_dis(generator)};
+  colors[2] = {int_dis(generator), int_dis(generator), int_dis(generator)};
   triangle(vertices, zbuffer, image, colors);
 };
 int main(int argc, char *argv[]) {
@@ -82,7 +94,9 @@ int main(int argc, char *argv[]) {
       new std::array<float, width * height>());
   zbuffer->fill(std::numeric_limits<float>::lowest());
 
-  render_triangle(width, height, zbuffer->data(), image);
+  for (int i = 0; i < 3; i++) {
+    render_triangle(width, height, zbuffer->data(), image);
+  }
   ppm3_write(f.c_str(), image.width_, image.height_, image.image_);
 
   return 0;
