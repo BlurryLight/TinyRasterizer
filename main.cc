@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
       new std::array<float, width * height>());
   zbuffer->fill(std::numeric_limits<float>::lowest());
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 10; i++) {
     render_triangle(width, height, zbuffer->data(), image);
   }
   ppm3_write(f.c_str(), image.width_, image.height_, image.image_);

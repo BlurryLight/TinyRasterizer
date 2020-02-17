@@ -33,11 +33,11 @@ inline void line(int x0, int y0, int x1, int y1, PPMImage &image, Color color) {
 // A,B,C in triangles
 // P is the Point
 // https://www.cnblogs.com/graphics/archive/2010/08/05/1793393.html
-inline bool point_in_triangle(glm::vec3 A, glm::vec3 B, glm::vec3 C,
-                              glm::vec3 P) {
-  glm::vec3 v0 = C - A;
-  glm::vec3 v1 = B - A;
-  glm::vec3 v2 = P - A;
+inline bool point_in_triangle(glm::vec2 A, glm::vec2 B, glm::vec2 C,
+                              glm::vec2 P) {
+  glm::vec2 v0 = C - A;
+  glm::vec2 v1 = B - A;
+  glm::vec2 v2 = P - A;
 
   float v0dotv0 = glm::dot(v0, v0);
   float v0dotv1 = glm::dot(v0, v1);
@@ -83,9 +83,9 @@ void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
           points[0].z;
 
       if (point_in_triangle(points[0], points[1], points[2], p)) {
-        if (zbuffer[int(p.y * image.width_ + p.x)] < p.z) {
+        if (zbuffer[int(p.y) * image.width_ + int(p.x)] < p.z) {
           image.set_pixel(int(p.x), int(p.y), color);
-          zbuffer[int(p.y * image.width_ + p.x)] = p.z;
+          zbuffer[int(p.y) * image.width_ + int(p.x)] = p.z;
         }
       }
     }
@@ -122,7 +122,7 @@ void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
 
       if (point_in_triangle(points[0].position_, points[1].position_,
                             points[2].position_, p)) {
-        if (zbuffer[int(p.y * image.width_ + p.x)] < p.z) {
+        if (zbuffer[int(p.y) * image.width_ + int(p.x)] < p.z) {
           glm::vec3 color;
           // https://www.zhihu.com/question/38356223/answer/76043922
           // points[0].position_ A colors[0] A.color
@@ -142,7 +142,7 @@ void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
                    (colors[2] * PAB_area)) /
                   total_area;
           image.set_pixel(int(p.x), int(p.y), color);
-          zbuffer[int(p.y * image.width_ + p.x)] = p.z;
+          zbuffer[int(p.y) * image.width_ + int(p.x)] = p.z;
         }
       }
     }
