@@ -21,6 +21,7 @@ struct Pixel {
     g_ = vec.g;
     b_ = vec.b;
   }
+  operator glm::vec3() const { return glm::vec3(r_, g_, b_); }
 };
 using Color = struct Pixel;
 #define BLACK                                                                  \
@@ -60,6 +61,13 @@ struct PPMImage {
       return;
     }
     image_[width_ * row + col] = p;
+  }
+  Pixel get_pixel(int row, int col) const {
+    if (row >= height_ || col >= width_) {
+      std::cerr << "get_pixel index error" << std::endl;
+      return glm::vec3(0, 0, 0);
+    }
+    return image_[width_ * row + col];
   }
 };
 

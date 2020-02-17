@@ -1,5 +1,6 @@
 #ifndef GEOMETRY_HPP
 #define GEOMETRY_HPP
+#include "model.h"
 #include "ppm.hpp"
 #include <array>
 #include <glm/glm.hpp>
@@ -58,6 +59,7 @@ inline bool point_in_triangle(glm::vec3 A, glm::vec3 B, glm::vec3 C,
   }
   return u + v <= 1;
 }
+// plain triangle(fill the color)
 void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
               Color color) {
   glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
@@ -74,10 +76,12 @@ void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
   //  (P - points[0]) * normal = 0;
   for (p.x = bbox_min.x; p.x < bbox_max.x; p.x++) {
     for (p.y = bbox_min.y; p.y < bbox_max.y; p.y++) {
-      // point-normal formular
-      p.z = (-normal.x * (p.x - points[0].x) - normal.y * (p.y - points[0].y)) /
-                normal.z +
-            points[0].z;
+      // point-normal formular(that's the math way)
+      p.z =
+          ((-normal.x * (p.x - points[0].x) - normal.y * (p.y - points[0].y)) /
+           normal.z) +
+          points[0].z;
+
       if (point_in_triangle(points[0], points[1], points[2], p)) {
         if (zbuffer[int(p.y * image.width_ + p.x)] <= p.z) {
           image.set_pixel(int(p.x), int(p.y), color);
@@ -86,6 +90,75 @@ void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
       }
     }
   }
+}
+// uv triangle
+void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
+              std::array<glm::vec3, 3> colors) {
+  glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
+  glm::vec3 bbox_max{0, 0, 0};
+  for (auto i : points) {
+    bbox_max.x = std::max(i.position_.x, bbox_max.x);
+    bbox_max.y = std::max(i.position_.y, bbox_max.y);
+    bbox_min.x = std::min(i.position_.x, bbox_min.x);
+    bbox_min.y = std::min(i.position_.y, bbox_min.y);
+  }
+  glm::vec3 normal =
+      glm::normalize(glm::cross(points[2].position_ - points[0].position_,
+                                points[1].position_ - points[0].position_));
+  glm::vec3 p;
+  //  (P - points[0]) * normal = 0;
+
+  glm::vec3 AB = points[1].position_ - points[0].position_;
+  glm::vec3 AC = points[2].position_ - points[0].position_;
+  glm::vec3 BC = points[2].position_ - points[1].position_;
+  float total_area = glm::length(glm::cross(AB, AC));
+  for (p.x = bbox_min.x; p.x < bbox_max.x; p.x++) {
+    for (p.y = bbox_min.y; p.y < bbox_max.y; p.y++) {
+      // point-normal formular(that's the math way)
+      p.z = ((-normal.x * (p.x - points[0].position_.x) -
+              normal.y * (p.y - points[0].position_.y)) /
+             normal.z) +
+            points[0].position_.z;
+
+      if (point_in_triangle(points[0].position_, points[1].position_,
+                            points[2].position_, p)) {
+        if (zbuffer[int(p.y * image.width_ + p.x)] <= p.z) {
+          glm::vec3 color;
+          // https://www.zhihu.com/question/38356223/answer/76043922
+          // points[0].position_ A colors[0] A.color
+          // points[1].position_ B
+          // points[2].position_ C
+          // total Area = || AB X AC ||
+          // p.color = A.color * Area_{PBC} /total_Area + ....
+          //        = A.color * || PB * BC|| /total_area + ..
+
+          glm::vec3 BP = p - points[1].position_;
+          glm::vec3 CP = p - points[2].position_;
+          glm::vec3 AP = p - points[0].position_;
+          float PAB_area = glm::length(glm::cross(AP, AB));
+          float PBC_area = glm::length(glm::cross(BP, BC));
+          float PCA_area = glm::length(glm::cross(CP, -AC));
+          color = ((colors[0] * PBC_area) + (colors[1] * PCA_area) +
+                   (colors[2] * PAB_area)) /
+                  total_area;
+          image.set_pixel(int(p.x), int(p.y), color);
+          zbuffer[int(p.y * image.width_ + p.x)] = p.z;
+        }
+      }
+    }
+  }
+}
+void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
+              const PPMImage &texture) {
+  // note: the texture should be flipped vertically
+  std::array<glm::vec3, 3> colors;
+  colors[0] = texture.get_pixel(int(points[0].texcoords_.y),
+                                int(points[0].texcoords_.x));
+  colors[1] = texture.get_pixel(int(points[1].texcoords_.y),
+                                int(points[1].texcoords_.x));
+  colors[2] = texture.get_pixel(int(points[2].texcoords_.y),
+                                int(points[2].texcoords_.x));
+  triangle(points, zbuffer, image, colors);
 }
 } // namespace pd
 
