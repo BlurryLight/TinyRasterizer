@@ -143,7 +143,7 @@ static void render_quad(float *zbuffer, PPMImage &image,
   triangle1[2].position_ = {1.0f,-1.0f,0.0f}; triangle1[2].texcoords_ = {1.0f,0.0f};//right-bottom
   //second triangle
   triangle2[0].position_ = triangle1[2].position_;triangle2[0].texcoords_ = triangle1[2].texcoords_;
-  triangle2[1].position_ = {1.0f,1.0f,0.0f};triangle1[1].texcoords_ = {1.0f,1.0f}; //right-top
+  triangle2[1].position_ = {1.0f,1.0f,0.0f};triangle2[1].texcoords_ = {1.0f,1.0f}; //right-top
   triangle2[2].position_ = triangle1[0].position_;triangle2[2].texcoords_ = triangle1[0].texcoords_;
   // clang-format on
   // now turn them into screen coords
@@ -154,23 +154,32 @@ static void render_quad(float *zbuffer, PPMImage &image,
   model[1][0] = -0.5;
   model[3][0] = 0.5;
   model[3][1] = 0.5;
+  glm::mat4 trans = glm::scale(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 1.0f));
+  trans = glm::rotate(trans, glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+  trans = glm::rotate(trans, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+  trans = glm::translate(trans, glm::vec3(0.5, 0.5, 0.0));
   // swap x,y, scale as 0.5 then translate (0.5,0.5)
   auto coords_transform = [&](std::array<Vertex, 3> &tri) {
     for (auto &i : tri) {
-
-      i.position_ = model * glm::vec4(i.position_, 1.0f);
+      auto tmp = trans * model * glm::vec4(i.position_, 1.0f);
+      i.position_ = tmp;
       i.position_.x = i.position_.x * image.width_;
       i.position_.y = i.position_.y * image.height_;
     }
   };
   coords_transform(triangle1);
   coords_transform(triangle2);
-  std::array<glm::vec3, 3> colors;
-  colors[0] = YELLOW;
-  colors[1] = BLUE;
-  colors[2] = PURPLE;
-  triangle(triangle1, zbuffer, image, colors);
-  triangle(triangle2, zbuffer, image, colors);
+  if (!texture) {
+    std::array<glm::vec3, 3> colors;
+    colors[0] = YELLOW;
+    colors[1] = BLUE;
+    colors[2] = PURPLE;
+    triangle(triangle1, zbuffer, image, colors);
+    triangle(triangle2, zbuffer, image, colors);
+  } else {
+    triangle(triangle1, zbuffer, image, *texture);
+    triangle(triangle2, zbuffer, image, *texture);
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -185,10 +194,9 @@ int main(int argc, char *argv[]) {
   zbuffer->fill(std::numeric_limits<float>::lowest());
 
   PPMImage texture;
-  int width2;
-  int height2;
-  ppm3_read("diffuse.ppm", &width2, &height2, &texture.image_);
-  render_quad(zbuffer->data(), image, nullptr);
+  ppm3_read("diffuse.ppm", &texture.width_, &texture.height_, &texture.image_);
+  texture.horizontal_flip();
+  render_quad(zbuffer->data(), image, &texture);
   ppm3_write(f.c_str(), image.width_, image.height_, image.image_);
 
   return 0;

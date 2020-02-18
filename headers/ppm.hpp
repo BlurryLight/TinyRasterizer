@@ -53,6 +53,14 @@ struct PPMImage {
     height_ = height;
     image_ = std::vector<Pixel>(width_ * height_);
   }
+  void horizontal_flip() {
+    for (int row = 0; row < height_ / 2; row++) {
+      for (int col = 0; col < width_; col++) {
+        std::swap(image_[row * width_ + col],
+                  image_[(height_ - 1 - row) * width_ + col]);
+      }
+    }
+  }
   void set_pixel(int row, int col,
                  const Pixel &p) //(0,1) 0 row 1 col = 2nd pixel
   {
@@ -63,7 +71,7 @@ struct PPMImage {
     image_[width_ * row + col] = p;
   }
   Pixel get_pixel(int row, int col) const {
-    if (row >= height_ || col >= width_) {
+    if (row > height_ || col > width_) {
       std::cerr << "get_pixel index error" << std::endl;
       return glm::vec3(0, 0, 0);
     }

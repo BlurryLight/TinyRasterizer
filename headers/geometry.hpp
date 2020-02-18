@@ -131,14 +131,66 @@ void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
   // note: the texture should be flipped vertically
   // FIXME: wrong code here
   // uv should be interpolated and colors should come from texture by uv
-  std::array<glm::vec3, 3> colors;
-  colors[0] = texture.get_pixel(int(points[0].texcoords_.y),
-                                int(points[0].texcoords_.x));
-  colors[1] = texture.get_pixel(int(points[1].texcoords_.y),
-                                int(points[1].texcoords_.x));
-  colors[2] = texture.get_pixel(int(points[2].texcoords_.y),
-                                int(points[2].texcoords_.x));
-  triangle(points, zbuffer, image, colors);
+  glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
+  glm::vec3 bbox_max{0, 0, 0};
+  for (auto i : points) {
+    bbox_max.x = std::max(i.position_.x, bbox_max.x);
+    bbox_max.y = std::max(i.position_.y, bbox_max.y);
+    bbox_min.x = std::min(i.position_.x, bbox_min.x);
+    bbox_min.y = std::min(i.position_.y, bbox_min.y);
+  }
+  glm::vec3 normal =
+      glm::normalize(glm::cross(points[2].position_ - points[0].position_,
+                                points[1].position_ - points[0].position_));
+  glm::vec3 p;
+  //  (P - points[0]) * normal = 0;
+
+  glm::vec3 AB = points[1].position_ - points[0].position_;
+  glm::vec3 AC = points[2].position_ - points[0].position_;
+  glm::vec3 BC = points[2].position_ - points[1].position_;
+  float total_area = glm::length(glm::cross(AB, AC));
+  for (p.x = bbox_min.x; p.x < bbox_max.x; p.x++) {
+    for (p.y = bbox_min.y; p.y < bbox_max.y; p.y++) {
+      // point-normal formular(that's the math way)
+      p.z = ((-normal.x * (p.x - points[0].position_.x) -
+              normal.y * (p.y - points[0].position_.y)) /
+             normal.z) +
+            points[0].position_.z;
+
+      if (point_in_triangle(points[0].position_, points[1].position_,
+                            points[2].position_, p)) {
+        if (zbuffer[int(p.y) * image.width_ + int(p.x)] < p.z) {
+          glm::vec3 color;
+          // https://www.zhihu.com/question/38356223/answer/76043922
+          // points[0] A colors[0] A.color
+          // points[1] B
+          // points[2] C
+          // total Area = || AB X AC ||
+          // p.color = A.color * Area_{PBC} /total_Area + ....
+          //        = A.color * || PB * BC|| /total_area + ..
+          float u = 0.0f, v = 0.0f;
+          glm::vec3 BP = p - points[1].position_;
+          glm::vec3 CP = p - points[2].position_;
+          glm::vec3 AP = p - points[0].position_;
+          float PAB_area = glm::length(glm::cross(AP, AB));
+          float PBC_area = glm::length(glm::cross(BP, BC));
+          float PCA_area = glm::length(glm::cross(CP, -AC));
+          u = ((points[0].texcoords_.x * PBC_area) +
+               (points[1].texcoords_.x * PCA_area) +
+               (points[2].texcoords_.x * PAB_area)) /
+              total_area;
+          v = ((points[0].texcoords_.y * PBC_area) +
+               (points[1].texcoords_.y * PCA_area) +
+               (points[2].texcoords_.y * PAB_area)) /
+              total_area;
+          color = texture.get_pixel(int(v * texture.height_),
+                                    int(u * texture.width_));
+          image.set_pixel(int(p.x), int(p.y), color);
+          zbuffer[int(p.y) * image.width_ + int(p.x)] = p.z;
+        }
+      }
+    }
+  }
 }
 } // namespace pd
 
