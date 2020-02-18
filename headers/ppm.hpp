@@ -85,6 +85,11 @@ inline int ppm3_write(const char *path, int width, int height,
 // don't support comments
 inline int ppm3_read(const char *path, int *width, int *height,
                      std::vector<Pixel> *vec) {
+  // clean the vec
+  if (!vec->empty()) {
+    auto tmp = std::vector<Pixel>();
+    vec->swap(tmp);
+  }
   std::ifstream ifs(path, std::ios::in);
   std::string token;
   ifs >> token;
@@ -109,11 +114,21 @@ inline int ppm3_read(const char *path, int *width, int *height,
     return -1;
   }
   ifs.get(); // skip the \n in 255\n
-  while (std::getline(ifs, token)) {
-    std::istringstream line(token);
-    Pixel tmp;
-    line >> tmp.r_ >> tmp.g_ >> tmp.b_;
-    vec->push_back(tmp);
+  int count = 0;
+  int buf[3];
+  Pixel tmp;
+  while (ifs >> token) {
+    if (token == "\n")
+      continue;
+    buf[count] = std::stoi(token);
+    count++;
+    if (count == 3) {
+      tmp.r_ = buf[0];
+      tmp.g_ = buf[1];
+      tmp.b_ = buf[2];
+      vec->push_back(tmp);
+      count = 0;
+    }
   }
   return 0;
 }
