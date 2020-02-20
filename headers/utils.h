@@ -16,5 +16,7 @@ void render_triangle(int width, int height, float *zbuffer, PPMImage &image);
 
 void render_quad(float *zbuffer, PPMImage &image, const PPMImage *texture);
 
+void render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture);
+
 }; // namespace pd
 #endif

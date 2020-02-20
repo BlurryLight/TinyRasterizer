@@ -46,6 +46,7 @@ void pd::render_quad(float *zbuffer, PPMImage &image, const PPMImage *texture) {
   triangle2[2].position_ = triangle1[0].position_;triangle2[2].texcoords_ = triangle1[0].texcoords_;
   // clang-format on
   // now turn them into screen coords
+  // swap x,y, scale as 0.5 then translate (0.5,0.5)
   glm::mat4 model(1.0f);
   model[0][0] = 0.0;
   model[0][1] = 0.5;
@@ -57,7 +58,6 @@ void pd::render_quad(float *zbuffer, PPMImage &image, const PPMImage *texture) {
   trans = glm::rotate(trans, glm::radians(-30.0f), glm::vec3(0.0f, 1.0f, 0.0f));
   trans = glm::rotate(trans, glm::radians(10.0f), glm::vec3(0.0f, 0.0f, 1.0f));
   trans = glm::translate(trans, glm::vec3(0.5, 0.5, 0.0));
-  // swap x,y, scale as 0.5 then translate (0.5,0.5)
   auto coords_transform = [&](std::array<Vertex, 3> &tri) {
     for (auto &i : tri) {
       auto tmp = trans * model * glm::vec4(i.position_, 1.0f);
@@ -160,13 +160,11 @@ void pd::render_man(int width, int height, float *zbuffer, PPMImage &image,
         //        colors[2] += static_cast<glm::vec3>(texture->get_pixel(
         //            int(v2.texcoords_.x * width), int(v2.texcoords_.y *
         //            height)));
-        //        // tone mapping
-        //        //        for (auto color : colors) {
-        //        //          color = 1.5f * color / (color + 255.0f) *
-        //        glm::vec3(255.0f);
-        //        //        }
-        //        triangle(world_coords, zbuffer, image, colors);
-
+        //        //         tone mapping
+        //        for (auto color : colors) {
+        //          color = 1.5f * color / (color + 255.0f) * glm::vec3(255.0f);
+        //        }
+        //        triangle(world_coords, zbuffer, image, texture);
       } else {
         glm::vec3 color = lightColor;
         color += diffuse_color;
@@ -175,6 +173,116 @@ void pd::render_man(int width, int height, float *zbuffer, PPMImage &image,
         color = 1.5f * color / (color + 255.0f) * glm::vec3(255.0f);
         triangle(world_coords, zbuffer, image, color);
       }
+    }
+  }
+}
+
+void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture) {
+  // clang-format off
+  float vertices[] = {
+      //vertex  -  normal -  texture
+      // back face
+      -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+      1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   // top-right
+      1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 0.0f,  // bottom-right
+      1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 1.0f, 1.0f,   // top-right
+      -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 0.0f, // bottom-left
+      -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, -1.0f, 0.0f, 1.0f,  // top-left
+      // front face
+      -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom-left
+      1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // bottom-right
+      1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // top-right
+      1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // top-right
+      -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // top-left
+      -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bottom-left
+      // left face
+      -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   // top-right
+      -1.0f, 1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 1.0f,  // top-left
+      -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom-left
+      -1.0f, -1.0f, -1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 1.0f, // bottom-left
+      -1.0f, -1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 0.0f, 0.0f,  // bottom-right
+      -1.0f, 1.0f, 1.0f, -1.0f, 0.0f, 0.0f, 1.0f, 0.0f,   // top-right
+      // right face
+      1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,     // top-left
+      1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // bottom-right
+      1.0f, 1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f,    // top-right
+      1.0f, -1.0f, -1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f,   // bottom-right
+      1.0f, 1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f, 0.0f,     // top-left
+      1.0f, -1.0f, 1.0f, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,    // bottom-left
+      // bottom face
+      -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, // top-right
+      1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f,  // top-left
+      1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // bottom-left
+      1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // bottom-left
+      -1.0f, -1.0f, 1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f,  // bottom-right
+      -1.0f, -1.0f, -1.0f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f, // top-right
+      // top face
+      -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // top-left
+      1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // bottom-right
+      1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 1.0f,  // top-right
+      1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f,   // bottom-right
+      -1.0f, 1.0f, -1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, // top-left
+      -1.0f, 1.0f, 1.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f   // bottom-left
+  };
+  // clang-format on
+  using tri_verts = std::array<Vertex, 3>;
+  // triangles
+  std::vector<tri_verts> tris; // should have 12 elemets( 6 faces * 2 triangles)
+
+  int stride = 8;
+  // like glBufferData
+  auto setup_tris = [&](std::array<Vertex, 3> &verts, int i, int stride) {
+    for (int j = 0; j < 3; j++) {
+      verts[j].position_ = {vertices[i], vertices[i + 1], vertices[i + 2]};
+      verts[j].normal_ = {vertices[i + 3], vertices[i + 4], vertices[i + 5]};
+      verts[j].texcoords_ = {vertices[i + 6], vertices[i + 7]};
+      i += stride;
+    }
+  };
+  for (int i = 0; i < sizeof(vertices) / sizeof(float); i += 3 * stride) {
+    tri_verts tmp;
+    setup_tris(tmp, i, stride);
+    tris.push_back(tmp);
+  }
+  // transform
+  // NDC to my own coords
+  glm::mat4 NDCtrans(1.0f);
+  NDCtrans[0][0] = 0.0;
+  NDCtrans[0][1] = 0.5;
+  NDCtrans[1][1] = 0.0;
+  NDCtrans[1][0] = -0.5;
+  NDCtrans[3][0] = 0.5;
+  NDCtrans[3][1] = 0.5;
+
+  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.5, 0.5, 0.0));
+  model = glm::scale(model, glm::vec3(0.2));
+  Camera cam({0.2, 0.2, 1}, {0, 1, 0}, {0, 0, 0}, 90.0f, 1.0f);
+  glm::mat4 proj = glm::mat4(1.0f); // ortho
+  glm::mat4 view = cam.look_at();
+  auto transform = [&](tri_verts &verts) {
+    for (auto &i : verts) {
+      auto tmp =
+          proj * view * model * (NDCtrans * glm::vec4(i.position_, 1.0f));
+      i.position_ = {tmp.x / tmp.w, tmp.y / tmp.w, tmp.z / tmp.w};
+      i.position_.x = i.position_.x * image.width_;
+      i.position_.y = i.position_.y * image.height_;
+    }
+  };
+
+  for (auto &i : tris) {
+    transform(i);
+  }
+  if (!texture) {
+    std::array<glm::vec3, 3> colors;
+    colors[0] = PURPLE;
+    colors[1] = YELLOW;
+    colors[2] = BLUE;
+    for (const auto &i : tris) {
+      triangle(i, zbuffer, image, colors);
+    }
+  } else {
+    for (const auto &i : tris) {
+      triangle(i, zbuffer, image, *texture);
     }
   }
 }
