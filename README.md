@@ -33,6 +33,11 @@
 
 ![模型加载](images/image2.jpg)
 
+**纹理插值/立方体**
+
+![纹理插值](images/image4.png)
+
+
 ### reference
 [ssloy/tinyrenderer](https://github.com/ssloy/tinyrenderer/wiki)
 [learnOpenGL](https://learnopengl.com/)
