@@ -60,8 +60,8 @@ inline bool point_in_triangle(glm::vec2 A, glm::vec2 B, glm::vec2 C,
   return u + v <= 1;
 }
 // interporlate colors when colors is given
-void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
-              std::array<glm::vec3, 3> colors) {
+inline void triangle(std::array<glm::vec3, 3> points, float *zbuffer,
+                     PPMImage &image, std::array<glm::vec3, 3> colors) {
   glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
   glm::vec3 bbox_max{0, 0, 0};
   for (auto i : points) {
@@ -116,18 +116,18 @@ void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
 };
 
 // plain triangle(fill the color)
-void triangle(std::array<glm::vec3, 3> points, float *zbuffer, PPMImage &image,
-              Color color) {
+inline void triangle(std::array<glm::vec3, 3> points, float *zbuffer,
+                     PPMImage &image, Color color) {
   triangle(points, zbuffer, image, {color, color, color});
 }
-void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
-              std::array<glm::vec3, 3> colors) {
+inline void triangle(std::array<Vertex, 3> points, float *zbuffer,
+                     PPMImage &image, std::array<glm::vec3, 3> colors) {
   auto tmp = std::array<glm::vec3, 3>{points[0].position_, points[1].position_,
                                       points[2].position_};
   triangle(tmp, zbuffer, image, colors);
 }
-void triangle(std::array<Vertex, 3> points, float *zbuffer, PPMImage &image,
-              const PPMImage &texture) {
+inline void triangle(std::array<Vertex, 3> points, float *zbuffer,
+                     PPMImage &image, const PPMImage &texture) {
   // note: the texture should be flipped vertically
   // FIXME: wrong code here
   // uv should be interpolated and colors should come from texture by uv
