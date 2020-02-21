@@ -16,9 +16,9 @@
 - [ ] shader
 - [ ] Phong/ Blinn Phong光照
 - [ ] normal mapping
-- [ ] 背面剔除
-- [ ] 窗口裁剪
-- [ ] shadow mapping
+- [ ] ~~背面剔除~~
+- [ ] ~~窗口裁剪~~
+- [ ] ~~shadow mapping~~
 
 ### Preview
 **颜色插值**
@@ -33,9 +33,13 @@
 
 ![模型加载](images/image2.jpg)
 
-**纹理插值/立方体**
+**纹理插值/立方体/ortho投影**
 
 ![纹理插值](images/image4.png)
+
+**纹理插值/立方体/persp投影**
+
+![纹理插值](images/image5.jpg)
 
 
 ### reference
