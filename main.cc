@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
             &texture.image_);
   texture.horizontal_flip();
   //  render_quad(zbuffer->data(), image, &texture);
-  render_cube(zbuffer->data(), image, &texture);
+  render_cube(zbuffer->data(), image, nullptr, true);
   ppm3_write(f.c_str(), image.width_, image.height_, image.image_);
 
   return 0;

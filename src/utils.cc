@@ -177,7 +177,8 @@ void pd::render_man(int width, int height, float *zbuffer, PPMImage &image,
   }
 }
 
-void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture) {
+void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture,
+                     bool phong) {
   // clang-format off
   float vertices[] = {
       //vertex  -  normal -  texture
@@ -267,6 +268,8 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture) {
       i.position_ = {tmp.x / tmp.w, tmp.y / tmp.w, tmp.z / tmp.w};
       i.position_.x = i.position_.x * image.width_;
       i.position_.y = i.position_.y * image.height_;
+
+      i.normal_ = glm::mat3(glm::transpose(glm::inverse(model))) * i.normal_;
     }
   };
 
@@ -274,12 +277,48 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture) {
     transform(i);
   }
   if (!texture) {
-    std::array<glm::vec3, 3> colors;
-    colors[0] = PURPLE;
-    colors[1] = YELLOW;
-    colors[2] = BLUE;
-    for (const auto &i : tris) {
-      triangle(i, zbuffer, image, colors);
+    if (!phong) {
+      std::array<glm::vec3, 3> colors;
+      colors[0] = PURPLE;
+      colors[1] = YELLOW;
+      colors[2] = BLUE;
+      for (const auto &i : tris) {
+        triangle(i, zbuffer, image, colors);
+      }
+    } else {
+      std::array<glm::vec3, 3> colors;
+      colors[0] = RED;
+      colors[1] = RED;
+      colors[2] = RED;
+
+      glm::vec3 lightPosition{0, 0, 1};
+      glm::vec3 light = WHITE;
+      light *= 0.5;
+      // ambient
+      float ambient = 0.3f;
+      for (auto &i : colors) {
+        i = ambient * i;
+      }
+      for (const auto &i : tris) {
+        for (int k = 0; k < 3; k++) {
+          auto j = i[k];
+          // diffuse
+          glm::vec3 lightDir = glm::normalize(lightPosition - j.position_);
+          glm::vec3 norm = glm::normalize(j.normal_);
+          float diffuse = glm::max(glm::dot(lightDir, norm), 0.0f);
+          // specular
+          // Because I haven't done the Triangle-interpolate, so there is only 2
+          // triangles in a face, that's impossible to show specular of
+          // highlight in 2 triangles.
+
+          colors[k] += diffuse * light;
+          // HDR tone mapping
+          colors[k] =
+              1.5f * colors[k] / (colors[k] + 255.0f) * glm::vec3(255.0f);
+        }
+
+        triangle(i, zbuffer, image, colors);
+      }
     }
   } else {
     for (const auto &i : tris) {

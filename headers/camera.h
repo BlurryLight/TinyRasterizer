@@ -13,7 +13,7 @@ public:
   glm::mat4 perspective();
   glm::mat4 ortho();
 
-private:
+  // private:
   glm::vec3 origin_;
   glm::vec3 up_;
   glm::vec3 lookat_;

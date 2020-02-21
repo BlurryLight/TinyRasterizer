@@ -13,9 +13,9 @@
 - [x] 摄像机
 - [x] 模型导入
 - [x] 纹理插值
-- [ ] shader
-- [ ] Phong/ Blinn Phong光照
-- [ ] normal mapping
+- [ ] ~~shader~~
+- [x] Phongg光照(没有做三角形顶点插值，高光没有实现)
+- [ ] ~~normal mapping~~(没有做三角形顶点插值,实现不了)
 - [ ] ~~背面剔除~~
 - [ ] ~~窗口裁剪~~
 - [ ] ~~shadow mapping~~
@@ -40,6 +40,10 @@
 **纹理插值/立方体/persp投影**
 
 ![纹理插值](images/image5.jpg)
+
+**Phong光照/立方体/persp投影**
+
+![Phong光照](images/image6.jpg)
 
 
 ### reference
