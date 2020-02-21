@@ -254,10 +254,11 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture) {
   NDCtrans[3][0] = 0.5;
   NDCtrans[3][1] = 0.5;
 
-  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(0.5, 0.5, 0.0));
-  model = glm::scale(model, glm::vec3(0.2));
-  Camera cam({0.2, 0.2, 1}, {0, 1, 0}, {0, 0, 0}, 90.0f, 1.0f);
-  glm::mat4 proj = glm::mat4(1.0f); // ortho
+  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(1.1, 1.0, 0.0));
+  model = glm::scale(model, glm::vec3(0.4));
+  Camera cam({0.7, 0.0, 2}, {0, 1, 0}, {0.0, 0.0, 0}, 90.0f, 1.0f);
+  //  glm::mat4 proj = glm::mat4(1.0f); // ortho
+  glm::mat4 proj = cam.perspective();
   glm::mat4 view = cam.look_at();
   auto transform = [&](tri_verts &verts) {
     for (auto &i : verts) {
