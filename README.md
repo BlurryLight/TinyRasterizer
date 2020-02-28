@@ -14,6 +14,7 @@
 - [x] 模型导入
 - [x] 纹理插值
 - [x] HDR(Reinhard tone mapping)
+- [x] MSAA(Multisample anti-aliasing)
 - [ ] ~~shader~~
 - [x] Phongg光照(没有做三角形顶点插值，高光没有实现)
 - [ ] ~~normal mapping~~(没有做三角形顶点插值,实现不了)
@@ -45,6 +46,10 @@
 **Phong光照/立方体/persp投影**
 
 ![Phong光照](images/image6.jpg)
+
+**MSAA抗锯齿**
+
+![MSAA](images/image7.jpg)
 
 
 ### reference
