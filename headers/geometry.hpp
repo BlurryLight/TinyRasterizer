@@ -65,10 +65,10 @@ inline void triangle(std::array<glm::vec3, 3> points, float *zbuffer,
   glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
   glm::vec3 bbox_max{0, 0, 0};
   for (auto i : points) {
-    bbox_max.x = std::max(i.x, bbox_max.x);
-    bbox_max.y = std::max(i.y, bbox_max.y);
-    bbox_min.x = std::min(i.x, bbox_min.x);
-    bbox_min.y = std::min(i.y, bbox_min.y);
+    bbox_max.x = int(std::max(i.x, bbox_max.x));
+    bbox_max.y = int(std::max(i.y, bbox_max.y));
+    bbox_min.x = int(std::min(i.x, bbox_min.x));
+    bbox_min.y = int(std::min(i.y, bbox_min.y));
   }
   glm::vec3 normal =
       glm::normalize(glm::cross(points[2] - points[0], points[1] - points[0]));
@@ -79,15 +79,31 @@ inline void triangle(std::array<glm::vec3, 3> points, float *zbuffer,
   glm::vec3 AC = points[2] - points[0];
   glm::vec3 BC = points[2] - points[1];
   float total_area = glm::length(glm::cross(AB, AC));
-  for (p.x = bbox_min.x; p.x < bbox_max.x; p.x++) {
-    for (p.y = bbox_min.y; p.y < bbox_max.y; p.y++) {
+  for (p.x = bbox_min.x + 0.5; p.x < bbox_max.x; p.x++) {
+    //(+0.5)the center of the pixel
+    for (p.y = bbox_min.y + 0.5; p.y < bbox_max.y; p.y++) {
       // point-normal formular(that's the math way)
+
+      // MSAA
+      int msaa_num = 0; // total is 4
+      float sample_x = p.x - 0.25f;
+      float sample_y = p.y - 0.25f;
+      for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+          if (point_in_triangle(points[0], points[1], points[2],
+                                {sample_x, sample_y})) {
+            msaa_num += 1;
+          }
+          sample_y += 0.5;
+        }
+        sample_x += 0.5;
+      }
       p.z =
           ((-normal.x * (p.x - points[0].x) - normal.y * (p.y - points[0].y)) /
            normal.z) +
           points[0].z;
 
-      if (point_in_triangle(points[0], points[1], points[2], p)) {
+      if (msaa_num != 0) { // any sample point is included
         if (zbuffer[int(p.y) * image.width_ + int(p.x)] < p.z) {
           glm::vec3 color;
           // https://www.zhihu.com/question/38356223/answer/76043922
@@ -107,6 +123,9 @@ inline void triangle(std::array<glm::vec3, 3> points, float *zbuffer,
           color = ((colors[0] * PBC_area) + (colors[1] * PCA_area) +
                    (colors[2] * PAB_area)) /
                   total_area;
+          float msaa_index = msaa_num / 4.0f;
+          glm::vec3 origin_color = image.get_pixel(int(p.x), int(p.y));
+          color = origin_color * (1 - msaa_index) + color * msaa_index;
           image.set_pixel(int(p.x), int(p.y), color);
           zbuffer[int(p.y) * image.width_ + int(p.x)] = p.z;
         }

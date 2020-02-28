@@ -84,10 +84,9 @@ void pd::render_quad(float *zbuffer, PPMImage &image, const PPMImage *texture) {
 void pd::render_triangle(int width, int height, float *zbuffer,
                          PPMImage &image) {
   std::array<Vertex, 3> vertices;
-  int z = 100;
-  vertices[0].position_ = {0, 0, 0};
-  vertices[1].position_ = {0, 1, 0};
-  vertices[2].position_ = {1, 0, 0};
+  vertices[0].position_ = {0.0f, 0.5f, 0};
+  vertices[1].position_ = {1.0, 0.3, 0};
+  vertices[2].position_ = {1, 0.7f, 0};
   std::array<glm::vec3, 3> colors;
   colors[0] = BLUE;
   colors[1] = YELLOW;
