@@ -20,12 +20,12 @@ int main(int argc, char *argv[]) {
   zbuffer->fill(std::numeric_limits<float>::lowest());
 
   PPMImage texture;
-  //  ppm3_read("awesomeface.ppm", &texture.width_, &texture.height_,
-  //            &texture.image_);
-  //  texture.horizontal_flip();
-  //  render_quad(zbuffer->data(), image, &texture);
-  //  render_cube(zbuffer->data(), image, nullptr, true);
-  render_triangle(image.width_, image.height_, zbuffer->data(), image);
+  ppm3_read("awesomeface.ppm", &texture.width_, &texture.height_,
+            &texture.image_);
+  texture.horizontal_flip();
+  //    render_quad(zbuffer->data(), image, &texture);
+  render_cube(zbuffer->data(), image, nullptr, true);
+  //  render_triangle(image.width_, image.height_, zbuffer->data(), image);
   ppm3_write(f.c_str(), image.width_, image.height_, image.image_);
 
   return 0;

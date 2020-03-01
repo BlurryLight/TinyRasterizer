@@ -244,6 +244,44 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture,
     setup_tris(tmp, i, stride);
     tris.push_back(tmp);
   }
+  // vertices interpolate
+  auto interpolate_tris = [&](std::vector<tri_verts> &verts) {
+    std::vector<tri_verts> res;
+    for (auto i : verts) {
+      // vertices of triangles
+      glm::vec3 A_pos = i[0].position_;
+      glm::vec3 B_pos = i[1].position_;
+      glm::vec3 C_pos = i[2].position_;
+
+      glm::vec2 A_uv = i[0].texcoords_;
+      glm::vec2 B_uv = i[1].texcoords_;
+      glm::vec2 C_uv = i[2].texcoords_;
+      // middle-point
+      glm::vec3 AB_middle_pos = (A_pos + B_pos) / 2.0f;
+      glm::vec3 BC_middle_pos = (C_pos + B_pos) / 2.0f;
+      glm::vec3 AC_middle_pos = (A_pos + C_pos) / 2.0f;
+
+      glm::vec2 AB_middle_uv = (A_uv + B_uv) / 2.0f;
+      glm::vec2 BC_middle_uv = (C_uv + B_uv) / 2.0f;
+      glm::vec2 AC_middle_uv = (A_uv + C_uv) / 2.0f;
+      // now we have 6 vertices, and can divede 1 triangles to 4
+      tri_verts sub_triangles[4];
+      auto normal = glm::normalize(glm::cross(B_pos - A_pos, C_pos - A_pos));
+      Vertex AB_middle = {AB_middle_pos, normal, AB_middle_uv};
+      Vertex BC_middle = {BC_middle_pos, normal, BC_middle_uv};
+      Vertex AC_middle = {AC_middle_pos, normal, AC_middle_uv};
+      sub_triangles[0] = {i[0], AB_middle, AC_middle};
+      sub_triangles[1] = {i[1], BC_middle, AB_middle};
+      sub_triangles[2] = {i[2], AC_middle, BC_middle};
+      sub_triangles[3] = {AB_middle, BC_middle, AC_middle};
+      res.insert(res.end(), std::begin(sub_triangles), std::end(sub_triangles));
+    }
+    verts.swap(res);
+  };
+  for (int i = 0; i < 4; i++) {
+    interpolate_tris(tris);
+  }
+
   // transform
   // NDC to my own coords
   glm::mat4 NDCtrans(1.0f);
@@ -254,10 +292,9 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture,
   NDCtrans[3][0] = 0.5;
   NDCtrans[3][1] = 0.5;
 
-  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(1.1, 1.0, 0.0));
-  model = glm::scale(model, glm::vec3(0.4));
+  glm::mat4 model = glm::translate(glm::mat4(1.0f), glm::vec3(1.5, 0.9, 0.0));
+  model = glm::scale(model, glm::vec3(0.3));
   Camera cam({0.7, 0.0, 2}, {0, 1, 0}, {0.0, 0.0, 0}, 90.0f, 1.0f);
-  //  glm::mat4 proj = glm::mat4(1.0f); // ortho
   glm::mat4 proj = cam.perspective();
   glm::mat4 view = cam.look_at();
   auto transform = [&](tri_verts &verts) {
@@ -268,7 +305,9 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture,
       i.position_.x = i.position_.x * image.width_;
       i.position_.y = i.position_.y * image.height_;
 
-      i.normal_ = glm::mat3(glm::transpose(glm::inverse(model))) * i.normal_;
+      i.normal_ = glm::normalize(
+          (glm::transpose(glm::inverse(glm::mat3(model * NDCtrans)))) *
+          i.normal_);
     }
   };
 
@@ -285,20 +324,21 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture,
         triangle(i, zbuffer, image, colors);
       }
     } else {
-      std::array<glm::vec3, 3> colors;
-      colors[0] = RED;
-      colors[1] = RED;
-      colors[2] = RED;
 
-      glm::vec3 lightPosition{0, 0, 1};
-      glm::vec3 light = WHITE;
-      light *= 0.5;
-      // ambient
-      float ambient = 0.3f;
-      for (auto &i : colors) {
-        i = ambient * i;
-      }
       for (const auto &i : tris) {
+        std::array<glm::vec3, 3> colors;
+        colors[0] = RED;
+        colors[1] = RED;
+        colors[2] = RED;
+
+        glm::vec3 lightPosition{0, 0, 1};
+        glm::vec3 light = WHITE;
+        light *= 0.5;
+        // ambient
+        float ambient = 0.3f;
+        for (auto &i : colors) {
+          i = ambient * i;
+        }
         for (int k = 0; k < 3; k++) {
           auto j = i[k];
           // diffuse
@@ -314,6 +354,9 @@ void pd::render_cube(float *zbuffer, PPMImage &image, const PPMImage *texture,
           // HDR tone mapping
           colors[k] =
               1.5f * colors[k] / (colors[k] + 255.0f) * glm::vec3(255.0f);
+          // normal visualize
+          //          colors[k] = (i[k].normal_ * 0.5f + 0.5f) *
+          //          glm::vec3(255.0f);
         }
 
         triangle(i, zbuffer, image, colors);

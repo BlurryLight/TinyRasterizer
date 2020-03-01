@@ -33,8 +33,8 @@ inline void line(int x0, int y0, int x1, int y1, PPMImage &image, Color color) {
 // A,B,C in triangles
 // P is the Point
 // https://www.cnblogs.com/graphics/archive/2010/08/05/1793393.html
-inline bool point_in_triangle(glm::vec2 A, glm::vec2 B, glm::vec2 C,
-                              glm::vec2 P) {
+inline bool point_in_triangle_v1(glm::vec2 A, glm::vec2 B, glm::vec2 C,
+                                 glm::vec2 P) {
   glm::vec2 v0 = C - A;
   glm::vec2 v1 = B - A;
   glm::vec2 v2 = P - A;
@@ -54,11 +54,26 @@ inline bool point_in_triangle(glm::vec2 A, glm::vec2 B, glm::vec2 C,
   float u = u_numerator / denomimator;
   float v = v_numerator / denomimator;
 
-  if (u < 0 || u > 1 || v < 0 || v > 1) {
-    return false;
-  }
-  return u + v <= 1;
+  return (u >= 0) && (v >= 0) && u + v <= 1;
 }
+inline bool point_in_triangle_v2(glm::vec2 A, glm::vec2 B, glm::vec2 C,
+                                 glm::vec2 P) {
+
+  glm::vec3 AB = glm::vec3(B - A, 0.0f);
+  glm::vec3 CA = glm::vec3(A - C, 0.0f);
+  glm::vec3 BC = glm::vec3(C - B, 0.0f);
+
+  glm::vec3 AP = glm::vec3(P - A, 0.0f);
+  glm::vec3 BP = glm::vec3(P - B, 0.0f);
+  glm::vec3 CP = glm::vec3(P - C, 0.0f);
+
+  auto dot1 = glm::cross(AB, AP);
+  auto dot2 = glm::cross(BC, BP);
+  auto dot3 = glm::cross(CA, CP);
+  return (glm::dot(dot1, dot2) >= 0 && glm::dot(dot2, dot3) >= 0);
+}
+
+static auto point_in_triangle = point_in_triangle_v2;
 // interporlate colors when colors is given
 inline void triangle(std::array<glm::vec3, 3> points, float *zbuffer,
                      PPMImage &image, std::array<glm::vec3, 3> colors) {
@@ -147,9 +162,6 @@ inline void triangle(std::array<Vertex, 3> points, float *zbuffer,
 }
 inline void triangle(std::array<Vertex, 3> points, float *zbuffer,
                      PPMImage &image, const PPMImage &texture) {
-  // note: the texture should be flipped vertically
-  // FIXME: wrong code here
-  // uv should be interpolated and colors should come from texture by uv
   glm::vec3 bbox_min{image.width_ - 1, image.height_ - 1, 0};
   glm::vec3 bbox_max{0, 0, 0};
   for (auto i : points) {
@@ -168,16 +180,30 @@ inline void triangle(std::array<Vertex, 3> points, float *zbuffer,
   glm::vec3 AC = points[2].position_ - points[0].position_;
   glm::vec3 BC = points[2].position_ - points[1].position_;
   float total_area = glm::length(glm::cross(AB, AC));
-  for (p.x = bbox_min.x; p.x < bbox_max.x; p.x++) {
-    for (p.y = bbox_min.y; p.y < bbox_max.y; p.y++) {
+  for (p.x = bbox_min.x + 0.5; p.x < bbox_max.x; p.x++) {
+    for (p.y = bbox_min.y + 0.5; p.y < bbox_max.y; p.y++) {
+
+      // MSAA
+      int msaa_num = 0; // total is 4
+      float sample_x = p.x - 0.25f;
+      float sample_y = p.y - 0.25f;
+      for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 2; j++) {
+          if (point_in_triangle(points[0].position_, points[1].position_,
+                                points[2].position_, {sample_x, sample_y})) {
+            msaa_num += 1;
+          }
+          sample_y += 0.5;
+        }
+        sample_x += 0.5;
+      }
       // point-normal formular(that's the math way)
       p.z = ((-normal.x * (p.x - points[0].position_.x) -
               normal.y * (p.y - points[0].position_.y)) /
              normal.z) +
             points[0].position_.z;
 
-      if (point_in_triangle(points[0].position_, points[1].position_,
-                            points[2].position_, p)) {
+      if (msaa_num != 0) {
         if (zbuffer[int(p.y) * image.width_ + int(p.x)] < p.z) {
           glm::vec3 color;
           // https://www.zhihu.com/question/38356223/answer/76043922
@@ -204,6 +230,9 @@ inline void triangle(std::array<Vertex, 3> points, float *zbuffer,
               total_area;
           color = texture.get_pixel(int(v * texture.height_),
                                     int(u * texture.width_));
+          float msaa_index = msaa_num / 4.0f;
+          glm::vec3 origin_color = image.get_pixel(int(p.x), int(p.y));
+          color = origin_color * (1 - msaa_index) + color * msaa_index;
           image.set_pixel(int(p.x), int(p.y), color);
           zbuffer[int(p.y) * image.width_ + int(p.x)] = p.z;
         }
